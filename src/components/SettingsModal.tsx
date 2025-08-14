@@ -6,6 +6,7 @@ import { validateOpenAiKey, listOpenAiModels } from '../services/ai/openai'
 import { validateGeminiKey, listGeminiModels } from '../services/ai/gemini'
 import { validateGroqKey, listGroqModels } from '../services/ai/groq'
 import { validateClaudeKey, listClaudeModels } from '../services/ai/claude'
+import PersonaSettings from './PersonaSettings'
 
 interface Props {
   isOpen: boolean
@@ -16,6 +17,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
   const dispatch = useAppDispatch()
   const currentProvider = useAppSelector((s) => s.settings.provider)
   
+  const [activeTab, setActiveTab] = useState<'api' | 'personas'>('api')
   const [provider, setProviderState] = useState<ProviderName>(currentProvider.name as ProviderName || 'openai')
   const [model, setModel] = useState(currentProvider.model || 'gpt-4o-mini')
   const [apiKey, setApiKey] = useState(currentProvider.apiKey || '')
@@ -125,8 +127,38 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
           </button>
         </div>
 
-        {/* Sweet message about API keys */}
-        <div className="mb-6 rounded-lg border border-brand-500/30 bg-brand-500/10 p-4">
+        {/* Tabs */}
+        <div className="mb-6 border-b border-gray-700">
+          <div className="flex space-x-8">
+            <button
+              type="button"
+              onClick={() => setActiveTab('api')}
+              className={`pb-2 text-sm font-medium transition-colors ${
+                activeTab === 'api'
+                  ? 'border-b-2 border-brand-500 text-brand-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              API Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('personas')}
+              className={`pb-2 text-sm font-medium transition-colors ${
+                activeTab === 'personas'
+                  ? 'border-b-2 border-brand-500 text-brand-400'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Personas
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'api' && (
+          <>
+            {/* Sweet message about API keys */}
+            <div className="mb-6 rounded-lg border border-brand-500/30 bg-brand-500/10 p-4">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex-shrink-0">
               <svg className="h-5 w-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -208,20 +240,26 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
           {!apiKey && <span className="text-xs text-gray-500">Enter API key to load models</span>}
         </label>
 
-        {error && <div className="mb-3 rounded-md border border-red-500 bg-red-900/30 p-2 text-sm text-red-300">{error}</div>}
-        
-        <div className="flex justify-end gap-2">
-          <button type="button" onClick={handleClose} className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-gray-200">
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            disabled={loading || !provider || !apiKey || !model || loadingModels} 
-            className="rounded-md bg-brand-600 px-4 py-2 font-medium hover:bg-brand-500 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
+            {error && <div className="mb-3 rounded-md border border-red-500 bg-red-900/30 p-2 text-sm text-red-300">{error}</div>}
+            
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={handleClose} className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-gray-200">
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading || !provider || !apiKey || !model || loadingModels} 
+                className="rounded-md bg-brand-600 px-4 py-2 font-medium hover:bg-brand-500 disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'personas' && (
+          <PersonaSettings />
+        )}
       </form>
     </div>
   )

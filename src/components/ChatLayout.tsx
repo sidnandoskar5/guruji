@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { hydrateFromStorage as hydrateChats, updatePersona } from '../store/slices/chatsSlice'
 import { hydrateFromStorage as hydrateSettings } from '../store/slices/settingsSlice'
 import { fetchGithubUser } from '../services/github'
+import { getAllPersonaConfigs } from '../config/personas'
 
 export default function ChatLayout() {
   const dispatch = useAppDispatch()
@@ -18,15 +19,15 @@ export default function ChatLayout() {
   }, [dispatch])
 
   useEffect(() => {
-    const defaultIds = ['guruji-hitesh', 'guruji-piyush', 'guruji-akshay', 'guruji-khan']
-    defaultIds.forEach(async (id) => {
-      const persona = personas[id]
-      if (persona && persona.githubUsername) {
+    const personaConfigs = getAllPersonaConfigs()
+    personaConfigs.forEach(async (config) => {
+      const persona = personas[config.id]
+      if (persona && config.githubUsername) {
         // Check if we need to fetch GitHub data (missing name, bio, or avatar)
-        const needsUpdate = !persona.avatarUrl || persona.displayName === 'Hitesh' || persona.displayName === 'Piyush' || persona.displayName === 'Akshay'
+        const needsUpdate = !persona.avatarUrl || persona.displayName === config.displayName
         
         if (needsUpdate) {
-          const gh = await fetchGithubUser(persona.githubUsername)
+          const gh = await fetchGithubUser(config.githubUsername)
           if (gh) {
             const updatedPersona = {
               ...persona,
