@@ -1,11 +1,23 @@
 import type { Message } from '../../types'
 
+/**
+ * Parameters for creating an OpenAI chat completion
+ */
 interface CreateParams {
+  /** OpenAI API key */
   apiKey: string
+  /** Model name (e.g., 'gpt-4o-mini') */
   model: string
+  /** Array of conversation messages */
   messages: Message[]
 }
 
+/**
+ * Creates a chat completion using OpenAI's API
+ * @param params - Configuration and messages for the completion
+ * @returns Promise resolving to the AI response text
+ * @throws Error with user-friendly message on API failure
+ */
 export async function createOpenAiChatCompletion(params: CreateParams): Promise<string> {
   const { apiKey, model, messages } = params
   const payload = {
@@ -51,6 +63,11 @@ export async function createOpenAiChatCompletion(params: CreateParams): Promise<
   return json.choices?.[0]?.message?.content ?? ''
 }
 
+/**
+ * Validates an OpenAI API key by making a test request
+ * @param apiKey - OpenAI API key to validate
+ * @returns Promise resolving to true if key is valid
+ */
 export async function validateOpenAiKey(apiKey: string): Promise<boolean> {
   try {
     const res = await fetch('https://api.openai.com/v1/models', {
@@ -62,6 +79,11 @@ export async function validateOpenAiKey(apiKey: string): Promise<boolean> {
   }
 }
 
+/**
+ * Fetches available models from OpenAI API
+ * @param apiKey - Valid OpenAI API key
+ * @returns Promise resolving to array of model IDs
+ */
 export async function listOpenAiModels(apiKey: string): Promise<string[]> {
   try {
     const res = await fetch('https://api.openai.com/v1/models', {

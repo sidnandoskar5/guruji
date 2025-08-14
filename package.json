@@ -1,12 +1,30 @@
 {
   "name": "guruji",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "A modern multi-provider AI chat application with persona-based conversations",
+  "keywords": ["ai", "chat", "openai", "gemini", "groq", "claude", "react", "typescript"],
+  "author": "Guruji Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/Persona.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/Persona/issues"
+  },
+  "homepage": "https://github.com/your-username/Persona#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'Add linting when needed'"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.7",
