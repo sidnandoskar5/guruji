@@ -94,10 +94,28 @@ export default function OnboardingModal() {
 
   const isFormValid = provider && apiKey && model && !loadingModels
 
-  return (
-    <div className="fixed inset-0 grid place-items-center bg-black/70 p-6">
-      <form onSubmit={handleSave} className="w-full max-w-lg rounded-xl bg-gray-800 p-6 shadow-xl">
-        <h2 className="mb-4 text-2xl font-semibold">Welcome to Guruji</h2>
+           return (
+           <div className="fixed inset-0 grid place-items-center bg-black/70 p-6">
+             <form onSubmit={handleSave} className="w-full max-w-lg rounded-xl bg-gray-800 p-6 shadow-xl">
+               <h2 className="mb-4 text-2xl font-semibold">Welcome to Guruji</h2>
+               
+               {/* Sweet message about API keys */}
+               <div className="mb-6 rounded-lg border border-brand-500/30 bg-brand-500/10 p-4">
+                 <div className="flex items-start gap-3">
+                   <div className="mt-0.5 flex-shrink-0">
+                     <svg className="h-5 w-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                     </svg>
+                   </div>
+                   <div className="text-sm">
+                     <p className="font-medium text-brand-300 mb-1">🔑 Please use your own API key</p>
+                     <p className="text-gray-300 leading-relaxed">
+                       Our demo API keys have reached their rate limits. To ensure the best experience, please use your own API key. 
+                       <span className="font-medium text-green-300"> Your API keys are stored securely in your browser only</span> - we never send them to our servers.
+                     </p>
+                   </div>
+                 </div>
+               </div>
         
         {/* 1. Provider Selection */}
         <label className="mb-4 flex flex-col gap-2">
