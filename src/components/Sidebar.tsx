@@ -1,23 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { addPersona, createThread, setActiveThread } from '../store/slices/chatsSlice'
-import type { Persona } from '../types'
-import { fetchGithubUser } from '../services/github'
+import { createThread, setActiveThread } from '../store/slices/chatsSlice'
+import SettingsModal from './SettingsModal'
 
 export default function Sidebar() {
   const dispatch = useAppDispatch()
   const personas = useAppSelector((s) => s.chats.personas)
   const threads = useAppSelector((s) => s.chats.threads)
   const orderedThreadIds = useAppSelector((s) => s.chats.orderedThreadIds)
-  const [showNew, setShowNew] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const defaultGuruji = useMemo(() =>
     Object.values(personas).filter((p) => p.id.startsWith('guruji-')).slice(0, 3),
   [personas])
 
-  const customPersonas = useMemo(() =>
-    Object.values(personas).filter((p) => p.id.startsWith('custom-')),
-  [personas])
+
 
   const customThreads = useMemo(() =>
     orderedThreadIds
@@ -28,29 +25,7 @@ export default function Sidebar() {
 
 
 
-  async function handleCreateNewPersona(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const form = new FormData(e.currentTarget)
-    const username = String(form.get('username') || '').trim()
-    const displayName = String(form.get('displayName') || '').trim()
-    const description = String(form.get('description') || '').trim()
-    const systemPrompt = String(form.get('persona') || '').trim()
 
-    const gh = username ? await fetchGithubUser(username) : null
-    const persona: Persona = {
-      id: `custom-${Date.now()}`,
-      displayName: displayName || gh?.name || username || 'New Guruji',
-      githubUsername: username,
-      description: description || gh?.bio,
-      systemPrompt: systemPrompt || 'You are a helpful AI assistant called Guruji.'
-    }
-    if (gh?.avatar_url) persona.avatarUrl = gh.avatar_url
-    dispatch(addPersona(persona))
-    dispatch(createThread({ personaId: persona.id, title: persona.displayName }))
-    setShowNew(false)
-    e.currentTarget.reset()
-    // persistence is handled via store subscription
-  }
 
   function handleOpenDefault(personaId: string, title: string) {
     // Check if there's already an existing thread for this persona
@@ -73,7 +48,19 @@ export default function Sidebar() {
 
   return (
     <div className="flex w-80 flex-col border-r border-gray-800 bg-gray-900 p-3">
-      <div className="mb-3 text-lg font-semibold">Guruji</div>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-lg font-semibold">Guruji</div>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+          title="Settings"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
       <div className="mb-2 text-sm uppercase text-gray-400">Default Gurujis</div>
       <div className="mb-4 space-y-1">
         {defaultGuruji.map((p) => (
@@ -93,31 +80,7 @@ export default function Sidebar() {
         ))}
       </div>
 
-      <button onClick={() => setShowNew((v) => !v)} className="mb-3 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium hover:bg-brand-500">Create new chat</button>
-      {showNew && (
-        <form onSubmit={handleCreateNewPersona} className="space-y-2 rounded-md border border-gray-800 p-3">
-          <label className="block text-sm">
-            <span className="text-gray-300">Git username</span>
-            <input name="username" className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 p-2" placeholder="octocat" />
-          </label>
-          <label className="block text-sm">
-            <span className="text-gray-300">Display name</span>
-            <input name="displayName" className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 p-2" placeholder="Guruji Name" />
-          </label>
-          <label className="block text-sm">
-            <span className="text-gray-300">Description</span>
-            <input name="description" className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 p-2" placeholder="Short intro" />
-          </label>
-          <label className="block text-sm">
-            <span className="text-gray-300">Persona (system prompt)</span>
-            <textarea name="persona" rows={4} className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 p-2" placeholder="Describe how this Guruji should respond" />
-          </label>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setShowNew(false)} className="rounded-md px-3 py-2 text-sm">Cancel</button>
-            <button type="submit" className="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium hover:bg-brand-500">Create</button>
-          </div>
-        </form>
-      )}
+
 
       {/* Custom Chats Section */}
       {customThreads.length > 0 && (
@@ -156,6 +119,8 @@ export default function Sidebar() {
           </div>
         </>
       )}
+
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   )
 }

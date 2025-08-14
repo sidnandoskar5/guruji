@@ -1,25 +1,38 @@
 import { useEffect, useState } from 'react'
-import { useAppDispatch } from '../store/hooks'
-import { hydrateFromStorage as hydrateSettings, setProvider } from '../store/slices/settingsSlice'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { setProvider } from '../store/slices/settingsSlice'
 import type { ProviderName } from '../types'
 import { validateOpenAiKey, listOpenAiModels } from '../services/ai/openai'
 import { validateGeminiKey, listGeminiModels } from '../services/ai/gemini'
 import { validateGroqKey, listGroqModels } from '../services/ai/groq'
 import { validateClaudeKey, listClaudeModels } from '../services/ai/claude'
 
-export default function OnboardingModal() {
+interface Props {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function SettingsModal({ isOpen, onClose }: Props) {
   const dispatch = useAppDispatch()
-  const [provider, setProviderState] = useState<ProviderName>('openai')
-  const [model, setModel] = useState('gpt-4o-mini')
-  const [apiKey, setApiKey] = useState('')
+  const currentProvider = useAppSelector((s) => s.settings.provider)
+  
+  const [provider, setProviderState] = useState<ProviderName>(currentProvider.name as ProviderName || 'openai')
+  const [model, setModel] = useState(currentProvider.model || 'gpt-4o-mini')
+  const [apiKey, setApiKey] = useState(currentProvider.apiKey || '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [models, setModels] = useState<string[]>([])
   const [loadingModels, setLoadingModels] = useState(false)
 
+  // Initialize form with current settings when modal opens
   useEffect(() => {
-    dispatch(hydrateSettings())
-  }, [dispatch])
+    if (isOpen) {
+      setProviderState(currentProvider.name as ProviderName || 'openai')
+      setModel(currentProvider.model || 'gpt-4o-mini')
+      setApiKey(currentProvider.apiKey || '')
+      setError(null)
+    }
+  }, [isOpen, currentProvider])
 
   // Fetch models dynamically when provider or key changes
   useEffect(() => {
@@ -57,6 +70,12 @@ export default function OnboardingModal() {
     loadModels()
   }, [provider, apiKey])
 
+  function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setProviderState(e.target.value as ProviderName)
+    setModel('')
+    setApiKey('')
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -79,6 +98,7 @@ export default function OnboardingModal() {
       }
       if (!ok) throw new Error('Invalid API Key or network error')
       dispatch(setProvider({ name: provider, model, apiKey }))
+      onClose()
     } catch (err: any) {
       setError(err.message || 'Failed to validate key')
     } finally {
@@ -86,18 +106,24 @@ export default function OnboardingModal() {
     }
   }
 
-  function handleProviderChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    setProviderState(e.target.value as ProviderName)
-    setModel('')
-    setApiKey('')
+  function handleClose() {
+    setError(null)
+    onClose()
   }
 
-  const isFormValid = provider && apiKey && model && !loadingModels
+  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 grid place-items-center bg-black/70 p-6">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-6">
       <form onSubmit={handleSave} className="w-full max-w-lg rounded-xl bg-gray-800 p-6 shadow-xl">
-        <h2 className="mb-4 text-2xl font-semibold">Welcome to Guruji</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">Settings</h2>
+          <button type="button" onClick={handleClose} className="text-gray-400 hover:text-gray-200">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
         
         {/* 1. Provider Selection */}
         <label className="mb-4 flex flex-col gap-2">
@@ -167,17 +193,18 @@ export default function OnboardingModal() {
         {error && <div className="mb-3 rounded-md border border-red-500 bg-red-900/30 p-2 text-sm text-red-300">{error}</div>}
         
         <div className="flex justify-end gap-2">
+          <button type="button" onClick={handleClose} className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-gray-200">
+            Cancel
+          </button>
           <button 
             type="submit" 
-            disabled={loading || !isFormValid} 
+            disabled={loading || !provider || !apiKey || !model || loadingModels} 
             className="rounded-md bg-brand-600 px-4 py-2 font-medium hover:bg-brand-500 disabled:opacity-50"
           >
-            {loading ? 'Validating...' : 'Save & Continue'}
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>
     </div>
   )
 }
-
-

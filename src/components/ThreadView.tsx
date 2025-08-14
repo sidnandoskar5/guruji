@@ -4,6 +4,9 @@ import { addMessage } from '../store/slices/chatsSlice'
 import type { Message } from '../types'
 import { createOpenAiChatCompletion } from '../services/ai/openai'
 import { createGeminiChatCompletion } from '../services/ai/gemini'
+import { createGroqChatCompletion } from '../services/ai/groq'
+import { createClaudeChatCompletion } from '../services/ai/claude'
+import MessageRenderer from './MessageRenderer'
 
 interface Props {
   threadId: string
@@ -17,53 +20,13 @@ export default function ThreadView({ threadId }: Props) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const hasGreeted = useRef<Set<string>>(new Set())
 
   const messages = thread?.messages || []
   const visibleMessages = useMemo(() => messages.filter(m => m.role !== 'system'), [messages])
 
   const prettyTitle = useMemo(() => persona?.displayName || 'Chat', [persona])
 
-  // Greet user automatically when a thread is first opened (only system message present)
-  useEffect(() => {
-    async function greet() {
-      if (!thread || !persona || !threadId) return
-      
-      // Check if we've already greeted this thread
-      if (hasGreeted.current.has(threadId)) return
-      
-      // Only greet if there's exactly 1 system message and no assistant messages yet
-      const systemMessages = messages.filter(m => m.role === 'system')
-      const assistantMessages = messages.filter(m => m.role === 'assistant')
-      
-      if (systemMessages.length !== 1 || assistantMessages.length > 0) return
-      
-      // Mark this thread as greeted to prevent duplicate calls
-      hasGreeted.current.add(threadId)
-      
-      setLoading(true)
-      try {
-        const greetUserMsg: Message = { id: crypto.randomUUID(), role: 'user', content: 'Greet me briefly to start the conversation. 1-2 lines. Then ask how you can help.', createdAt: Date.now() }
-        const replyText = provider.name === 'openai'
-          ? await createOpenAiChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(greetUserMsg) })
-          : await createGeminiChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(greetUserMsg) })
-        const aiMsg: Message = { id: crypto.randomUUID(), role: 'assistant', content: replyText || `Hello! I'm ${persona.displayName}. How can I help you today?`, createdAt: Date.now() }
-        dispatch(addMessage({ threadId, message: aiMsg }))
-      } catch (e: any) {
-        // For greeting errors, provide a friendly fallback without showing the error
-        const fallback: Message = { 
-          id: crypto.randomUUID(), 
-          role: 'assistant', 
-          content: `Hello! I'm ${persona.displayName}. How can I help you today?\n\n${e.message?.includes('Rate limit') ? '⏳ I had a small hiccup connecting, but I\'m ready to chat now!' : ''}`, 
-          createdAt: Date.now() 
-        }
-        dispatch(addMessage({ threadId, message: fallback }))
-      } finally {
-        setLoading(false)
-      }
-    }
-    greet()
-  }, [threadId, messages, persona, provider, thread, dispatch])
+
 
   async function sendMessage() {
     const trimmed = input.trim()
@@ -73,9 +36,21 @@ export default function ThreadView({ threadId }: Props) {
     setInput('')
     setLoading(true)
     try {
-      const replyText = provider.name === 'openai'
-        ? await createOpenAiChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
-        : await createGeminiChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
+      let replyText = ''
+      switch (provider.name) {
+        case 'openai':
+          replyText = await createOpenAiChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
+          break
+        case 'gemini':
+          replyText = await createGeminiChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
+          break
+        case 'groq':
+          replyText = await createGroqChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
+          break
+        case 'claude':
+          replyText = await createClaudeChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
+          break
+      }
       const aiMsg: Message = { id: crypto.randomUUID(), role: 'assistant', content: replyText || '...', createdAt: Date.now() }
       dispatch(addMessage({ threadId, message: aiMsg }))
     } catch (e: any) {
@@ -111,12 +86,15 @@ export default function ThreadView({ threadId }: Props) {
             <div className={
               'max-w-[70%] rounded-lg px-3 py-2 text-sm ' + (m.role === 'user' ? 'bg-brand-600' : 'bg-gray-800')
             }>
-              {m.content}
+              <MessageRenderer content={m.content} role={m.role} />
             </div>
           </div>
         ))}
         {!visibleMessages.length && (
-          <div className="text-center text-gray-400">Say hi to {persona?.displayName}. They will greet you first.</div>
+          <div className="text-center text-gray-400">
+            <div className="mb-2">Start a conversation with {persona?.displayName}</div>
+            <div className="text-sm text-gray-500">Type your message below to begin chatting</div>
+          </div>
         )}
       </div>
       <div className="flex items-center gap-2 border-t border-gray-800 p-3">

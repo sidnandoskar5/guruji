@@ -1,4 +1,4 @@
-export type ProviderName = 'openai' | 'gemini'
+export type ProviderName = 'openai' | 'gemini' | 'groq' | 'claude'
 
 export interface ProviderConfig {
   name: ProviderName | ''
