@@ -11,7 +11,7 @@ export default function Sidebar() {
   const [showSettings, setShowSettings] = useState(false)
 
   const defaultGuruji = useMemo(() =>
-    Object.values(personas).filter((p) => p.id.startsWith('guruji-')).slice(0, 3),
+    Object.values(personas).filter((p) => p.id.startsWith('guruji-')),
   [personas])
 
 

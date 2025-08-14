@@ -18,7 +18,7 @@ export default function ChatLayout() {
   }, [dispatch])
 
   useEffect(() => {
-    const defaultIds = ['guruji-hitesh', 'guruji-piyush', 'guruji-akshay']
+    const defaultIds = ['guruji-hitesh', 'guruji-piyush', 'guruji-akshay', 'guruji-khan']
     defaultIds.forEach(async (id) => {
       const persona = personas[id]
       if (persona && persona.githubUsername) {
