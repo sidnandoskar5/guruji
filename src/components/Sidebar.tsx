@@ -9,10 +9,17 @@ export default function Sidebar() {
   const threads = useAppSelector((s) => s.chats.threads)
   const orderedThreadIds = useAppSelector((s) => s.chats.orderedThreadIds)
   const [showSettings, setShowSettings] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const defaultGuruji = useMemo(() =>
-    Object.values(personas).filter((p) => p.id.startsWith('guruji-')),
-  [personas])
+    Object.values(personas)
+      .filter((p) => p.id.startsWith('guruji-'))
+      .filter((p) => 
+        searchQuery === '' || 
+        p.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      ),
+  [personas, searchQuery])
 
 
 
@@ -20,8 +27,15 @@ export default function Sidebar() {
     orderedThreadIds
       .map(id => threads[id])
       .filter(thread => thread && personas[thread.personaId]?.id.startsWith('custom-'))
+      .filter(thread => 
+        searchQuery === '' || 
+        thread.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        thread.messages.some(m => 
+          m.content.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      )
       .slice(0, 10), // Limit to 10 recent custom chats
-  [orderedThreadIds, threads, personas])
+  [orderedThreadIds, threads, personas, searchQuery])
 
 
 
@@ -61,7 +75,32 @@ export default function Sidebar() {
           </svg>
         </button>
       </div>
-      <div className="mb-2 text-sm uppercase text-gray-400">Default Gurujis</div>
+      {/* Search Input */}
+      <div className="mb-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 pl-9 text-sm text-gray-200 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+          <svg
+            className="absolute left-3 top-2.5 h-4 w-4 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+      </div>
+
       <div className="mb-4 space-y-1">
         {defaultGuruji.map((p) => (
           <button key={p.id} onClick={() => handleOpenDefault(p.id, p.displayName)} className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-gray-800">
