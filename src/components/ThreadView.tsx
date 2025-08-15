@@ -7,6 +7,7 @@ import { createGeminiChatCompletion } from '../services/ai/gemini'
 import { createGroqChatCompletion } from '../services/ai/groq'
 import { createClaudeChatCompletion } from '../services/ai/claude'
 import MessageRenderer from './MessageRenderer'
+import TypingIndicator from './TypingIndicator'
 
 interface Props {
   threadId: string
@@ -90,7 +91,10 @@ export default function ThreadView({ threadId }: Props) {
             </div>
           </div>
         ))}
-        {!visibleMessages.length && (
+        {loading && (
+          <TypingIndicator personaName={persona?.displayName} />
+        )}
+        {!visibleMessages.length && !loading && (
           <div className="text-center text-gray-400">
             <div className="mb-2">Start a conversation with {persona?.displayName}</div>
             <div className="text-sm text-gray-500">Type your message below to begin chatting</div>
