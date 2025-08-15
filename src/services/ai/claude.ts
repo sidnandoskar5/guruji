@@ -1,4 +1,5 @@
 import type { Message } from '../../types'
+import { parseAPIError } from '../../utils/errorHandler'
 
 interface CreateParams {
   apiKey: string
@@ -34,30 +35,8 @@ export async function createClaudeChatCompletion(params: CreateParams): Promise<
   
   if (!res.ok) {
     const text = await res.text()
-    let errorMessage = `Claude API Error (${res.status})`
-    
-    try {
-      const errorData = JSON.parse(text)
-      if (res.status === 429) {
-        errorMessage = '⏳ Rate limit exceeded. Please wait a moment and try again.'
-      } else if (res.status === 400) {
-        errorMessage = '❌ Invalid request. Please check your input or model name.'
-      } else if (res.status === 401) {
-        errorMessage = '🔑 Invalid API key. Please check your Claude API key.'
-      } else if (res.status === 403) {
-        errorMessage = '🚫 Access denied. Please check your API key permissions.'
-      } else if (res.status === 404) {
-        errorMessage = '❓ Model not found. Please check your model name.'
-      } else if (res.status === 500) {
-        errorMessage = '🔧 Claude service temporarily unavailable. Please try again later.'
-      } else {
-        errorMessage = errorData.error?.message || errorMessage
-      }
-    } catch {
-      // If we can't parse the error, use the generic message
-    }
-    
-    throw new Error(errorMessage)
+    const formattedError = parseAPIError({ status: res.status, message: text }, 'Claude')
+    throw new Error(formattedError)
   }
   
   const json = await res.json()

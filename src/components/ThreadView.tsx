@@ -6,6 +6,7 @@ import { createOpenAiChatCompletion } from '../services/ai/openai'
 import { createGeminiChatCompletion } from '../services/ai/gemini'
 import { createGroqChatCompletion } from '../services/ai/groq'
 import { createClaudeChatCompletion } from '../services/ai/claude'
+import { createDeepSeekChatCompletion } from '../services/ai/deepseek'
 import MessageRenderer from './MessageRenderer'
 import TypingIndicator from './TypingIndicator'
 
@@ -50,6 +51,9 @@ export default function ThreadView({ threadId }: Props) {
           break
         case 'claude':
           replyText = await createClaudeChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
+          break
+        case 'deepseek':
+          replyText = await createDeepSeekChatCompletion({ apiKey: provider.apiKey, model: provider.model, messages: thread.messages.concat(userMsg) })
           break
       }
       const aiMsg: Message = { id: crypto.randomUUID(), role: 'assistant', content: replyText || '...', createdAt: Date.now() }

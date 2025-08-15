@@ -1,7 +1,7 @@
 /**
  * Supported AI providers for chat completions
  */
-export type ProviderName = 'openai' | 'gemini' | 'groq' | 'claude'
+export type ProviderName = 'openai' | 'gemini' | 'groq' | 'claude' | 'deepseek'
 
 /**
  * Configuration for an AI provider
